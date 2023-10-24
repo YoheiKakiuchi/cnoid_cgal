@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>cnoid_cgal</name>
+  <version>0.0.0</version>
+  <description>Geometric operation in choreonoid using CGAL</description>
+  <maintainer email="kakiuchi.yohei.sw@tut.jp">Yohei Kakiuchi</maintainer>
+  <license>GPL v3</license>
+  <author email="kakiuchi.yohei.sw@tut.jp">Yohei Kakiuchi</author>
+  <!--url type="website"></url-->
+  <url type="repository">https://github.com/IRSL-tut/cnoid_cgal</url>
+
+  <depend>choreonoid</depend>
+  <depend>cgal</depend>
+
+  <export>
+    <build_type>cmake</build_type>
+  </export>
+</package>
