@@ -10,18 +10,10 @@
 //
 #include <CGAL/Nef_polyhedron_3.h>
 #include <CGAL/Polyhedron_3.h>
-#include <CGAL/OFF_to_nef_3.h>
 //
 #include <CGAL/Surface_mesh.h>
-#include <CGAL/boost/graph/convert_nef_polyhedron_to_polygon_mesh.h>
-// Triangulation
-#include <CGAL/mark_domain_in_triangulation.h>
-#include <CGAL/Polygon_2.h>
-// volume
-#include <CGAL/Polygon_mesh_processing/measure.h>
 
 #include <unordered_map>
-
 
 // double //
 //using NTDim = double;
@@ -46,18 +38,9 @@ using CGAL_Polyhedron = CGAL::Polyhedron_3<CGAL_Kernel>;
 typedef CGAL_Kernel Kernel;
 typedef CGAL_Polyhedron Polyhedron;
 typedef CGAL_Nef_polyhedron3 Nef_polyhedron;
-//typedef CGAL::Surface_mesh<Kernel::Point_3> Surface_mesh_;
-typedef CGAL::Surface_mesh<CGAL::Cartesian<double>::Point_3> Surface_mesh_;
+typedef CGAL::Surface_mesh<Kernel::Point_3> Surface_mesh_;
+//typedef CGAL::Surface_mesh<CGAL::Cartesian<double>::Point_3> Surface_mesh_;
 //typedef CGAL::Surface_mesh<CGAL::Exact_predicates_exact_constructions_kernel::Point_3> Surface_mesh_;
-
-//// triangulation
-typedef CGAL::Triangulation_vertex_base_2<CGAL_Kernel> VertexBase;
-typedef CGAL::Constrained_triangulation_face_base_2<CGAL_Kernel> FaceBase;
-typedef CGAL::Triangulation_data_structure_2<VertexBase, FaceBase> TDS;
-typedef CGAL::Exact_predicates_tag  Itag;
-typedef CGAL::Constrained_Delaunay_triangulation_2<CGAL_Kernel, TDS, Itag> CDT;
-typedef CDT::Point Point2;
-typedef CGAL::Polygon_2<CGAL_Kernel> Polygon_2_;
 
 namespace cnoid {
 
@@ -80,6 +63,8 @@ public:
 
     void writeToMesh(SgMeshDbl &_mesh, bool verbose = false);
     int readFromMesh(const SgMeshDbl &_mesh, bool verbose = false);
+    // fair
+    // refine https://doc.cgal.org/latest/Polygon_mesh_processing/index.html
     void transform(const Isometry3 &T);
     double volume();
     bool isValid() { return !!cgal_obj; }
