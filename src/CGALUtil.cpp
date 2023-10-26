@@ -1,5 +1,25 @@
 #include "CGALUtil.h"
 
+// generating mesh
+#include <CGAL/OFF_to_nef_3.h>
+// writing mesh
+#include <CGAL/boost/graph/convert_nef_polyhedron_to_polygon_mesh.h>
+// Triangulation
+#include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
+#include <CGAL/mark_domain_in_triangulation.h> // not using ??
+#include <CGAL/Polygon_2.h> // not using ??
+// volume
+#include <CGAL/Polygon_mesh_processing/measure.h>
+
+//// triangulation
+typedef CGAL::Triangulation_vertex_base_2<CGAL_Kernel> VertexBase;
+typedef CGAL::Constrained_triangulation_face_base_2<CGAL_Kernel> FaceBase;
+typedef CGAL::Triangulation_data_structure_2<VertexBase, FaceBase> TDS;
+typedef CGAL::Exact_predicates_tag  Itag;
+typedef CGAL::Constrained_Delaunay_triangulation_2<CGAL_Kernel, TDS, Itag> CDT;
+typedef CDT::Point Point2;
+typedef CGAL::Polygon_2<CGAL_Kernel> Polygon_2_;
+
 #ifdef PCLSEARCH
 #include <pcl/kdtree/kdtree_flann.h>
 typedef pcl::PointXY PCL2D;
@@ -283,6 +303,22 @@ void generateOnPlanePoints(const SgVertexArrayDblPtr varray, const std::vector<i
 {
     Plane pl;
     //double plres = pl.setPlane(varray->at(indices[0]), varray->at(indices[1]), varray->at(indices.back()));
+    DEBUG_STREAM("in(size) : " << indices.size());
+#ifdef DEBUG_MSG
+    //// check for vertex
+    {
+        std::size_t num = indices.size();
+        for(std::size_t i = 0; i < num -1; i++) {
+            const Vector3 &vi = varray->at(indices[i]);
+            for(std::size_t j = i+1; j < num; j++) {
+                const Vector3 &vj = varray->at(indices[j]);
+                if (vi == vj) {
+                    DEBUG_STREAM(" " << i << " == " << j);
+                }
+            }
+        }
+    }
+#endif
     double plres = pl.setPlane(varray->at(indices[0]), varray->at(indices[1]), varray->at(indices[2]));
     pl.print();
     if (plres < 1e-10) {
@@ -293,7 +329,7 @@ void generateOnPlanePoints(const SgVertexArrayDblPtr varray, const std::vector<i
         const Vector3 &v = varray->at(indices[i]);
         DEBUG_STREAM( i << " v (" << indices[i] << ") : " << v.x() << " " << v.y() << " " << v.z());
         bool res = pl.onPlane(v, uvlst[i]);
-        DEBUG_STREAM(" res : " << uvlst[i].x() << " " << uvlst[i].y());
+        DEBUG_STREAM(" res : " << res << " : " << uvlst[i].x() << " " << uvlst[i].y());
         if (!res) {
             DEBUG_STREAM(" [WARNING] point is not on plane?");
         }
@@ -366,6 +402,8 @@ void writeNefToMesh(Nef_polyhedron &nef, SgMeshDbl &_mesh, bool verbose = false)
 {
     Surface_mesh_ mesh_out;
     CGAL::convert_nef_polyhedron_to_polygon_mesh(nef, mesh_out);
+    CGAL::Polygon_mesh_processing::triangulate_faces(mesh_out);
+    //// post_processing surface_mesh
     DEBUG_STREAM(" ver: " << mesh_out.number_of_vertices());
     DEBUG_STREAM(" fcs: " << mesh_out.number_of_faces());
     SgVertexArrayDblPtr varray(new SgVertexArrayDbl());
@@ -380,9 +418,15 @@ void writeNefToMesh(Nef_polyhedron &nef, SgMeshDbl &_mesh, bool verbose = false)
             Surface_mesh_::Point &pt = mesh_out.point(*it);
             DEBUG_STREAM(cntr << " " << (*it) << " " << pt.x() << " " << pt.y() << " " << pt.z());
             Vector3 &vv = varray->at(cntr);
+#ifdef USE_GMPQ
+            vv.x() = pt.x().to_double();
+            vv.y() = pt.y().to_double();
+            vv.z() = pt.z().to_double();
+#else
             vv.x() = pt.x();
             vv.y() = pt.y();
             vv.z() = pt.z();
+#endif
         }
     }
     std::vector<int> indices;
@@ -462,9 +506,10 @@ double CGALMesh::CGALObj::volume()
 {
     if(!!cgal_obj) {
 #ifdef USE_GMPQ
-        Surface_mesh_ mesh_out;
+        CGAL::Surface_mesh<CGAL::Cartesian<double>::Point_3> mesh_out;
+        // CGAL::Surface_mesh<CGAL::Exact_predicates_exact_constructions_kernel::Point_3> mesh_out;
         CGAL::convert_nef_polyhedron_to_polygon_mesh(*cgal_obj, mesh_out);
-        return CGAL::Polygon_mesh_processing::volume(mesh_out);
+        return CGAL::to_double(CGAL::Polygon_mesh_processing::volume(mesh_out));
 #else
         Polyhedron plh;
         cgal_obj->convert_to_polyhedron(plh);
