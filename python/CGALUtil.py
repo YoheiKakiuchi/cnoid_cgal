@@ -107,7 +107,7 @@ def transformForBooleanOperation(object0, object1, SgRoot=None):
     else:
         return (shape0, shape1, cds0.transformation(cds1))
 
-def booleanUnion(object0, object1, SgRoot=None):
+def booleanUnion(object0, object1, SgRoot=None, update=True):
     if isinstance(object0, coordsWrapper):
         obj0 = object0.target
     else:
@@ -121,11 +121,13 @@ def booleanUnion(object0, object1, SgRoot=None):
         shape0.mesh.booleanUnion(shape1.mesh)
     else:
         shape0.mesh.booleanUnionWithTransform(shape1.mesh, cds.cnoidPosition)
-    shape0.mesh.notifyUpdate()
-    if isinstance(object0, coordsWrapper):
-        object0.updateTarget()
-    elif hasattr(object0, 'notifyUpdate'):
-        object0.notifyUpdate()
+    if update:
+        shape0.mesh.notifyUpdate()
+        #if isinstance(object0, coordsWrapper):
+        #    object0.updateTarget()
+        #elif hasattr(object0, 'notifyUpdate'):
+        #    object0.notifyUpdate()
+    return object0
 
 def createByUnion(object0, object1, SgRoot=None):
     if isinstance(object0, coordsWrapper):
@@ -160,7 +162,7 @@ def createByUnion(object0, object1, SgRoot=None):
         return trans
     return res
 
-def booleanDifference(object0, object1, SgRoot=None):
+def booleanDifference(object0, object1, SgRoot=None, update=True):
     if isinstance(object0, coordsWrapper):
         obj0 = object0.target
     else:
@@ -174,11 +176,13 @@ def booleanDifference(object0, object1, SgRoot=None):
         shape0.mesh.booleanDifference(shape1.mesh)
     else:
         shape0.mesh.booleanDifferenceWithTransform(shape1.mesh, cds.cnoidPosition)
-    shape0.mesh.notifyUpdate()
-    if isinstance(object0, coordsWrapper):
-        object0.updateTarget()
-    elif hasattr(object0, 'notifyUpdate'):
-        object0.notifyUpdate()
+    if update:
+        shape0.mesh.notifyUpdate()
+        #if isinstance(object0, coordsWrapper):
+        #    object0.updateTarget()
+        #elif hasattr(object0, 'notifyUpdate'):
+        #    object0.notifyUpdate()
+    return object0
 
 def createByDifference(object0, object1, SgRoot=None):
     if isinstance(object0, coordsWrapper):
@@ -213,7 +217,7 @@ def createByDifference(object0, object1, SgRoot=None):
         return trans
     return res
 
-def booleanIntersection(object0, object1, SgRoot=None):
+def booleanIntersection(object0, object1, SgRoot=None, update=True):
     if isinstance(object0, coordsWrapper):
         obj0 = object0.target
     else:
@@ -227,11 +231,13 @@ def booleanIntersection(object0, object1, SgRoot=None):
         shape0.mesh.booleanIntersection(shape1.mesh)
     else:
         shape0.mesh.booleanIntersectionWithTransform(shape1.mesh, cds.cnoidPosition)
-    shape0.mesh.notifyUpdate()
-    if isinstance(object0, coordsWrapper):
-        object0.updateTarget()
-    elif hasattr(object0, 'notifyUpdate'):
-        object0.notifyUpdate()
+    if update:
+        shape0.mesh.notifyUpdate()
+        #if isinstance(object0, coordsWrapper):
+        #    object0.updateTarget()
+        #elif hasattr(object0, 'notifyUpdate'):
+        #    object0.notifyUpdate()
+    return object0
 
 def createByIntersection(object0, object1, SgRoot=None):
     if isinstance(object0, coordsWrapper):
