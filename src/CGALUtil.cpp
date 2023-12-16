@@ -10,7 +10,11 @@
 #include <CGAL/Polygon_2.h> // not using ??
 // volume
 #include <CGAL/Polygon_mesh_processing/measure.h>
+//
+#include <CGAL/Side_of_triangle_mesh.h>
 
+//#include <CGAL/Polygon_mesh_processing/refine.h>
+//#include <CGAL/Polygon_mesh_processing/fair.h>
 //// triangulation
 typedef CGAL::Triangulation_vertex_base_2<CGAL_Kernel> VertexBase;
 typedef CGAL::Constrained_triangulation_face_base_2<CGAL_Kernel> FaceBase;
@@ -398,11 +402,9 @@ void TriangulationPointXY(const std::vector<Vector2> &uvlst, std::vector<int> &r
         }
     }
 }
-void writeNefToMesh(Nef_polyhedron &nef, SgMeshDbl &_mesh, bool verbose = false)
+//void SurfaceMeshToMeshDbl(Surface_mesh_ &mesh_out, SgMeshDbl &_mesh, bool verbose = false)
+inline void SurfaceMeshToMeshDbl(Surface_mesh_ &mesh_out, SgMeshDbl &_mesh, bool verbose = false)
 {
-    Surface_mesh_ mesh_out;
-    CGAL::convert_nef_polyhedron_to_polygon_mesh(nef, mesh_out);
-    CGAL::Polygon_mesh_processing::triangulate_faces(mesh_out);
     //// post_processing surface_mesh
     DEBUG_STREAM(" ver: " << mesh_out.number_of_vertices());
     DEBUG_STREAM(" fcs: " << mesh_out.number_of_faces());
@@ -470,6 +472,36 @@ void writeNefToMesh(Nef_polyhedron &nef, SgMeshDbl &_mesh, bool verbose = false)
     _mesh.setVerticesDbl(varray);
     _mesh.faceVertexIndices() = indices;
 }
+void writeNefToMesh(Nef_polyhedron &nef, SgMeshDbl &_mesh, bool verbose = false)
+{
+    Surface_mesh_ mesh_out;
+    CGAL::convert_nef_polyhedron_to_polygon_mesh(nef, mesh_out);
+    CGAL::Polygon_mesh_processing::triangulate_faces(mesh_out);
+
+    SurfaceMeshToMeshDbl(mesh_out, _mesh, verbose);
+}
+#if 0
+//// TODO: mesh processing
+typedef Polyhedron::Vertex_handle Vertex_handle;
+void writeNefToMesh(Nef_polyhedron &nef, SgMeshDbl &_mesh, bool verbose = false)
+{
+    Polyhedron poly;
+    nef.convert_to_Polyhedron(poly);
+    std::vector<Polyhedron::Facet_handle>  new_facets;
+    std::vector<Vertex_handle> new_vertices;
+    CGAL::Polygon_mesh_processing::refine(poly, faces(poly),
+                                          std::back_inserter(new_facets),
+                                          std::back_inserter(new_vertices),
+                                          CGAL::parameters::density_control_factor(2.));
+    CGAL::Polygon_mesh_processing::triangulate_faces(poly);
+
+    Nef_polyhedron new_nef(poly);
+    Surface_mesh_ mesh_out;
+    CGAL::convert_nef_polyhedron_to_polygon_mesh(new_nef, mesh_out);
+
+    SurfaceMeshToMeshDbl(mesh_out, _mesh, verbose);
+}
+#endif
 ////
 //
 //
@@ -518,4 +550,91 @@ double CGALMesh::CGALObj::volume()
 #endif
     }
     return 0.0;
+}
+bool CGALMesh::CGALObj::checkInside(const Vector3 &pin)
+{
+    if(!!cgal_obj) {
+       Polyhedron plh;
+       cgal_obj->convert_to_polyhedron(plh);
+       CGAL::Side_of_triangle_mesh<Polyhedron, CGAL_Kernel> inside(plh);
+       //CGAL::Side_of_triangle_mesh<Nef_polyhedron, CGAL_Kernel> inside(*cgal_obj);
+       Polyhedron::Point_3 p(pin.x(), pin.y(), pin.z());
+       CGAL::Bounded_side res = inside(p);
+        if (res == CGAL::ON_BOUNDED_SIDE) {
+            return true;
+        } else if (res == CGAL::ON_BOUNDARY) {
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+bool CGALMesh::CGALObj::checkInside(const Vector3f &p)
+{
+    Vector3 pd(p.x(), p.y(), p.z());
+    return checkInside(pd);
+}
+bool CGALMesh::CGALObj::checkInside(const SgPointSet &pt, std::vector<int> &_result)
+{
+    if(!!cgal_obj) {
+        _result.resize(0);
+        Polyhedron plh;
+        cgal_obj->convert_to_polyhedron(plh);
+        CGAL::Side_of_triangle_mesh<Polyhedron, CGAL_Kernel> inside(plh);
+        //CGAL::Side_of_triangle_mesh<Nef_polyhedron, CGAL_Kernel> inside(*cgal_obj);
+        const SgVertexArray *ary = pt.vertices();
+        for(int i = 0; i < ary->size(); i++) {
+            const Vector3f &pin = ary->at(i);
+            Polyhedron::Point_3 p(pin.x(), pin.y(), pin.z());
+            CGAL::Bounded_side res = inside(p);
+            if (res == CGAL::ON_BOUNDED_SIDE) {
+                _result.push_back(1);
+            } else if (res == CGAL::ON_BOUNDARY) {
+                _result.push_back(2);
+            } else {
+                _result.push_back(0);
+            }
+        }
+        return true;
+    }
+    return false;
+}
+bool CGALMesh::CGALObj::generateInsidePoints(int st_x, int ed_x, int st_y, int ed_y, int st_z, int ed_z, double resolution,
+                                             std::vector<Vector3> &result, double off_x, double off_y, double off_z, double scl_x, double scl_y, double scl_z)
+{
+    if(!!cgal_obj) {
+        result.resize(0);
+        Polyhedron plh;
+        cgal_obj->convert_to_polyhedron(plh);
+        CGAL::Side_of_triangle_mesh<Polyhedron, CGAL_Kernel> inside(plh);
+        double resolution_2 = resolution/2;
+        for(int xx = st_x; xx <= ed_x; xx++) {
+            double org_x = ( resolution_2 + resolution*xx );
+            double map_ptx = org_x + off_x;
+            double obj_ptx = scl_x * org_x + off_x;
+            for(int yy = st_y; yy <= ed_y; yy++) {
+                double org_y = ( resolution_2 + resolution*yy );
+                double map_pty = org_y + off_y;
+                double obj_pty = scl_y * org_y + off_y;
+                for(int zz = st_z; zz <= ed_z; zz++) {
+                    double org_z = ( resolution_2 + resolution*zz );
+                    double map_ptz = org_z + off_z;
+                    double obj_ptz = scl_z * org_z + off_z;
+                    Polyhedron::Point_3 p(obj_ptx, obj_pty, obj_ptz);
+                    CGAL::Bounded_side res = inside(p);
+                    if (res == CGAL::ON_BOUNDED_SIDE) {
+                        Vector3 v(map_ptx, map_pty, map_ptz);
+                        result.push_back(v);
+                    } else if (res == CGAL::ON_BOUNDARY) {
+                        Vector3 v(map_ptx, map_pty, map_ptz);
+                        result.push_back(v);
+                    } else {
+                        // _result.push_back(0);
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    return false;
 }

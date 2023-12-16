@@ -5,6 +5,7 @@
 #include <cnoid/PyUtil>
 #include <cnoid/PyEigenTypes>
 #include "../src/CnoidCGAL.h"
+#include "../src/CnoidOctomap.h"
 
 using Matrix4RM = Eigen::Matrix<double, 4, 4, Eigen::RowMajor>;
 
@@ -71,5 +72,36 @@ PYBIND11_MODULE(CGALMesh, m)
     .def("createByIntersection", (CGALMeshPtr(CGALMesh::*)(const CGALMeshPtr) const)&CGALMesh::createByIntersection)
     .def("createByIntersectionWithTransform", [] (CGALMesh &self, CGALMeshPtr target, Eigen::Ref<const Matrix4RM> T) {
         const Isometry3 tt(T); return self.createByIntersection(target, tt); })
+    .def("checkInside", [](CGALMesh &self, const Vector3 &v) { return self.checkInside(v); })
+    .def("checkInside", [](CGALMesh &self, const Vector3f &v) { return self.checkInside(v); })
+    .def("checkInside", [](CGALMesh &self, const SgPointSetPtr &pt) {
+        std::vector<int> res; self.checkInside(*pt, res); return res;})
+#if 0
+    .def("generateInsideOctomap", [](CGALMesh &self, int size_hint) {
+        double resolution = 0.1;
+        std::vector<int> start_end_xyz(6);
+        Vector3 offset;
+        //
+        //bounding_box
+        //
+        SgOctomapPtr res_ = new SgOctomap(resolution);
+        std::vector<Vector3> pt; // points buffer
+        self.generateInsidePoints(resolution, start_end_xyz, offset, pt);
+        res_->addPoints(pt);
+        res_->offset = offset;
+        return res_; })
+#endif
+    ;
+
+    py::class_< SgOctomap, SgOctomapPtr > (m, "SgOctomap")
+    .def(py::init<double>())
+    .def("addPointSet", &SgOctomap::addPointSet)
+    .def("prune", &SgOctomap::prune)
+    .def("expand", &SgOctomap::expand)
+    .def("addBoxPrimitives", &SgOctomap::addBoxPrimitives)
+    .def_property("offset", [] (SgOctomap &self) { return self.offset; },
+                  [] (SgOctomap &self, const Vector3 &v) { self.offset = v; })
+    .def_property("scale", [] (SgOctomap &self) { return self.scale; },
+                  [] (SgOctomap &self, const Vector3 &v) { self.scale = v; })
     ;
 }

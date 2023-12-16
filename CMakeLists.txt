@@ -9,6 +9,8 @@ endif()
 
 find_package(Choreonoid REQUIRED)
 find_package(CGAL REQUIRED)
+find_package(OCTOMAP REQUIRED)
+
 ## find_package(PCL REQUIRED COMPONENTS kdtree)
 ## define PCLSEARCH
 if(CHOREONOID_CXX_STANDARD)
@@ -27,16 +29,19 @@ choreonoid_add_library(
   SHARED
   src/CnoidCGAL.cpp
   src/CGALUtil.cpp
+  src/CnoidOctomap.cpp
   )
 target_include_directories(${target_lib}
   PUBLIC
   ${CGAL_INCLUDE_DIRS}
+  ${OCTOMAP_INCLUDE_DIRS}
   ## ${PCL_KDTREE_INCLUDE_DIRS}
   )
 target_link_libraries(${target_lib}
   PUBLIC
   Choreonoid::CnoidUtil
   ${CGAL_LIBRARIES}
+  ${OCTOMAP_LIBRARIES}
   ## ${PCL_KDTREE_LIBRARIES}
   )
 

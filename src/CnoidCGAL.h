@@ -71,11 +71,16 @@ public:
     CGALMeshPtr createByIntersection(const CGALMeshPtr target) const;
     CGALMeshPtr createByIntersection(const CGALMeshPtr target, const Isometry3 &T) const;
 
+    bool checkInside(const Vector3 &p);
+    bool checkInside(const Vector3f &p);
+    bool checkInside(const SgPointSet &pt, std::vector<int> &_result);
+
+    bool generateInsidePoints(double resolution, std::vector<int> start_end_xyz,
+                              const Vector3 &offset, const Vector3 &scale, std::vector<Vector3> &result);
 private:
     class CGALObj;
     CGALObj *object;
 };
 
 }
-
 #endif // __CHOREONOID_CGAL_LIB_H__

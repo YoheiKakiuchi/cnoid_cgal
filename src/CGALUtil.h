@@ -68,6 +68,14 @@ public:
     void transform(const Isometry3 &T);
     double volume();
     bool isValid() { return !!cgal_obj; }
+
+    bool checkInside(const Vector3 &p);
+    bool checkInside(const Vector3f &p);
+    bool checkInside(const SgPointSet &pt, std::vector<int> &_result);
+
+    bool generateInsidePoints(int st_x, int ed_x, int st_y, int ed_y, int st_z, int ed_z, double resolution,
+                              std::vector<Vector3> &result, double off_x = 0.0, double off_y = 0.0, double off_z = 0.0,
+                              double scl_x = 0.0, double scl_y = 0.0, double scl_z = 0.0);
     int error_count;
     Nef_polyhedron *cgal_obj;
 };
