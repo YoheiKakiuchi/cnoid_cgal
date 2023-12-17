@@ -77,6 +77,9 @@ public:
 
     bool generateInsidePoints(double resolution, std::vector<int> start_end_xyz,
                               const Vector3 &offset, const Vector3 &scale, std::vector<Vector3> &result);
+
+    bool generateInsideIndices(const std::vector<int> &start_end_xyz, const Vector3 &size, const Vector3 &offset,
+                               std::vector<int> &indices);
 private:
     class CGALObj;
     CGALObj *object;
