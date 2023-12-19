@@ -2,31 +2,25 @@
 #define __CHOREONOID_MERGE_BOXES_LIB_H__
 
 #include <vector>
-#include <iostream>
+#include <cnoid/SceneDrawables>
+
+#include "exportdecl.h"
 
 namespace cnoid
 {
 
-class MergeBoxes
+class CNOID_EXPORT MergeBoxes
 {
 
 public:
-    MergeBoxes(size_t _xx, size_t _yy, size_t _zz) : size_x(_xx), size_y(_yy), size_z(_zz), size_xy(_xx*_yy)
-    {
-    }
+    MergeBoxes(size_t _xx, size_t _yy, size_t _zz);
 
-    bool setPoints(std::vector<int> &_points)
-    {
-        if ( points.size() != size_x * size_y * size_z ) {
-            return false;
-        }
-        points = _points;
-        return true;
-    }
-    void getSize(int &_x, int &_y, int &_z)
-    {
-        _x = size_x; _y = size_y; _z = size_z;
-    }
+    bool setPoints(std::vector<int> &_points);
+    void getSize(int &_x, int &_y, int &_z);
+    void mergePoints();
+
+    //SceneDrawables
+    void addBoxPrimitives(SgGroupPtr sgg, const Vector3 &offset, const Vector3 &size, SgMaterial *mat = nullptr);
 
 protected:
     size_t size_x;
@@ -44,13 +38,38 @@ public:
         Box(int _sx, int _ex, int _sy, int _ey, int _sz, int _ez) :
             sx(_sx), sy(_sy), sz(_sz), ex(_ex), ey(_ey), ez(_ez)
         { }
-        int sx;
+        // s?, e? >= 0
+        // sx <= ex
+        // sx = N, ex = N  :==>  size = 1 (at index N)
+        int sx; // index of start
         int sy;
         int sz;
-        int ex;
+        int ex; // index of end
         int ey;
         int ez;
         int id;
+        inline void getSize(int &_x, int &_y, int &_z)
+        {
+            _x = ex - sx + 1;
+            _y = ey - sy + 1;
+            _z = ez - sz + 1;
+        }
+        inline void getCenter(float &_x, float &_y, float &_z)
+        {
+            _x = (sx + ex)*0.5;
+            _y = (sy + ey)*0.5;
+            _z = (sz + ez)*0.5;
+        }
+        inline void getActualCenter(double &_x, double &_y, double &_z,
+                                    const Vector3 &offset, const Vector3 &size)
+        {
+            float _cx, _cy, _cz;
+            getCenter(_cx, _cy, _cz);
+
+            _x = _cx * size.x() + offset.x();
+            _y = _cy * size.y() + offset.y();
+            _z = _cz * size.z() + offset.z();
+        }
     };
 
     enum Direction {
@@ -65,102 +84,6 @@ public:
 
 public:
     std::vector<Box> boxes;
-
-public:
-    void mergePoints()
-    {
-        for (size_t cur_idx = 0; cur_idx < points.size(); cur_idx++) {
-            if (points[cur_idx] < 0) { // there is no point
-                continue;
-            }
-            int x_, y_, z_;
-            index_to_coords(cur_idx, x_, y_, z_);
-#if 0
-            std::cout << std::endl;
-            std::cout << "idx: " << cur_idx;
-            std::cout << ", " << x_;
-            std::cout << ", " << y_;
-            std::cout << ", " << z_ << std::endl;
-#endif
-            Direction dir = canExpand(x_, y_, z_);
-#if 0
-            std::cout << "dir: " << dir << std::endl;
-#endif
-            if (dir == Direction::None) { // isolated point
-                continue;
-            }
-            //
-            int sx_, ex_, sy_, ey_, sz_, ez_;
-            sx_ = ex_ = x_;
-            sy_ = ey_ = y_;
-            sz_ = ez_ = z_;
-            size_t expand_idx = cur_idx;
-            switch(dir) {
-            case Direction::DIR_P_X:
-                ex_ += 1;
-                expand_idx += 1;
-                break;
-            case Direction::DIR_M_X:
-                sx_ -= 1;
-                expand_idx -= 1;
-                break;
-            case Direction::DIR_P_Y:
-                ey_ += 1;
-                expand_idx += size_y;
-                break;
-            case Direction::DIR_M_Y:
-                sy_ -= 1;
-                expand_idx -= size_y;
-                break;
-            case Direction::DIR_P_Z:
-                ez_ += 1;
-                expand_idx += size_xy;
-                break;
-            case Direction::DIR_M_Z:
-                sz_ -= 1;
-                expand_idx -= size_xy;
-                break;
-            }
-#if 0
-            std::cout << "(" << sx_;
-            std::cout << ", " << ex_ << ")";
-            std::cout << "(" << sy_;
-            std::cout << ", " << ey_ << ")";
-            std::cout << "(" << sz_;
-            std::cout << ", " << ez_ << ")" << std::endl;
-#endif
-            Box cur_box(sx_, ex_, sy_, ey_, sz_, ez_);
-            cur_box.id = points[cur_idx];
-            points[cur_idx] = -1;
-            points[expand_idx] = -1;
-
-            while (true) {
-                Direction cur_dir = canExpand(cur_box);
-#if 0
-                std::cout << "ld: " << cur_dir << std::endl;
-#endif
-                if (cur_dir == Direction::None) {
-                    break;
-                }
-#if 0
-                std::cout << "s: ";
-                for(int i = 0; i < points.size(); i++) {
-                    std::cout << " " << points[i];
-                }
-                std::cout << std::endl;
-#endif
-                expand(cur_box, cur_dir);
-#if 0
-                std::cout << "e: ";
-                for(int i = 0; i < points.size(); i++) {
-                    std::cout << " " << points[i];
-                }
-                std::cout << std::endl;
-#endif
-            }
-            boxes.push_back(cur_box);
-        }
-    }
 
 protected:
     inline Direction canExpand(size_t _x, size_t _y, size_t _z)
@@ -202,19 +125,19 @@ protected:
     }
     inline Direction canExpand(Box &_box)
     {
-        if (canExpand_YZ(_box.ex+1,   _box.sy, _box.ey, _box.sz, _box.ez)) {
+        if (canExpand_YZ(_box.ex+1, _box.sy, _box.ey, _box.sz, _box.ez)) {
             return Direction::DIR_P_X;
         }
         if (canExpand_YZ(_box.sx-1, _box.sy, _box.ey, _box.sz, _box.ez)) {
             return Direction::DIR_M_X;
         }
-        if (canExpand_XZ(_box.ey+1,   _box.sx, _box.ex, _box.sz, _box.ez)) {
+        if (canExpand_XZ(_box.ey+1, _box.sx, _box.ex, _box.sz, _box.ez)) {
             return Direction::DIR_P_Y;
         }
         if (canExpand_XZ(_box.sy-1, _box.sx, _box.ex, _box.sz, _box.ez)) {
             return Direction::DIR_M_Y;
         }
-        if (canExpand_XY(_box.ez+1,   _box.sx, _box.ex, _box.sy, _box.ey)) {
+        if (canExpand_XY(_box.ez+1, _box.sx, _box.ex, _box.sy, _box.ey)) {
             return Direction::DIR_P_Z;
         }
         if (canExpand_XY(_box.sz-1, _box.sx, _box.ex, _box.sy, _box.ey)) {
@@ -251,7 +174,6 @@ protected:
             break;
         }
     }
-
     inline void removeId_YZ(int _xx, int _sy, int _ey, int _sz, int _ez)
     {
         for(int zz = _sz; zz < _ez+1; zz++) {

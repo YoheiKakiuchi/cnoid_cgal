@@ -75,11 +75,12 @@ public:
     bool checkInside(const Vector3f &p);
     bool checkInside(const SgPointSet &pt, std::vector<int> &_result);
 
+    // for Octomap
     bool generateInsidePoints(double resolution, std::vector<int> start_end_xyz,
                               const Vector3 &offset, const Vector3 &scale, std::vector<Vector3> &result);
-
-    bool generateInsideIndices(const std::vector<int> &start_end_xyz, const Vector3 &size, const Vector3 &offset,
-                               std::vector<int> &indices);
+    // for MergeBoxes
+    bool generateInsidePointsIndices(const std::vector<int> &start_end_xyz, const Vector3 &size, const Vector3 &offset,
+                                     std::vector<int> &indices);
 private:
     class CGALObj;
     CGALObj *object;

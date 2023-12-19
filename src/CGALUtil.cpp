@@ -638,3 +638,37 @@ bool CGALMesh::CGALObj::generateInsidePoints(int st_x, int ed_x, int st_y, int e
     }
     return false;
 }
+bool CGALMesh::CGALObj::generateInsidePointsIndices(int st_x, int ed_x, int st_y, int ed_y, int st_z, int ed_z,
+                                                    std::vector<int> &indices, double size_x, double size_y, double size_z,
+                                                    double off_x, double off_y, double off_z)
+{
+    if(!!cgal_obj) {
+        indices.resize(0);
+        Polyhedron plh;
+        cgal_obj->convert_to_polyhedron(plh);
+        CGAL::Side_of_triangle_mesh<Polyhedron, CGAL_Kernel> inside(plh);
+        int counter = 0;
+        for(int xx = st_x; xx <= ed_x; xx++) {
+            double obj_ptx = size_x * xx + off_x;
+            for(int yy = st_y; yy <= ed_y; yy++) {
+                double obj_pty = size_y * yy + off_y;
+                for(int zz = st_z; zz <= ed_z; zz++) {
+                    double obj_ptz = size_z * zz + off_z;
+                    Polyhedron::Point_3 p(obj_ptx, obj_pty, obj_ptz);
+                    CGAL::Bounded_side res = inside(p);
+                    if (res == CGAL::ON_BOUNDED_SIDE) {
+                        indices.push_back(counter);
+                        counter++;
+                    } else if (res == CGAL::ON_BOUNDARY) {
+                        indices.push_back(counter);
+                        counter++;
+                    } else {
+                        indices.push_back(-1);
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    return false;
+}

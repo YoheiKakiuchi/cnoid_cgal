@@ -30,6 +30,7 @@ choreonoid_add_library(
   src/CnoidCGAL.cpp
   src/CGALUtil.cpp
   src/CnoidOctomap.cpp
+  src/MergeBoxes.cpp
   )
 target_include_directories(${target_lib}
   PUBLIC

@@ -389,3 +389,13 @@ bool CGALMesh::generateInsidePoints(double resolution, std::vector<int> start_en
     }
     return false;
 }
+bool CGALMesh::generateInsidePointsIndices(const std::vector<int> &start_end_xyz, const Vector3 &size, const Vector3 &offset,
+                                           std::vector<int> &indices)
+{
+    if(!!object && start_end_xyz.size() > 5) {
+        return object->generateInsidePointsIndices(start_end_xyz[0], start_end_xyz[1], start_end_xyz[2], start_end_xyz[3],
+                                                   start_end_xyz[4], start_end_xyz[5], indices,
+                                                   size.x(), size.y(), size.z(), offset.x(), offset.y(), offset.z());
+    }
+    return false;
+}

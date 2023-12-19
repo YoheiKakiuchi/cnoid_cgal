@@ -6,6 +6,7 @@
 #include <cnoid/PyEigenTypes>
 #include "../src/CnoidCGAL.h"
 #include "../src/CnoidOctomap.h"
+#include "../src/MergeBoxes.h"
 
 using Matrix4RM = Eigen::Matrix<double, 4, 4, Eigen::RowMajor>;
 
@@ -76,6 +77,8 @@ PYBIND11_MODULE(CGALMesh, m)
     .def("checkInside", [](CGALMesh &self, const Vector3f &v) { return self.checkInside(v); })
     .def("checkInside", [](CGALMesh &self, const SgPointSetPtr &pt) {
         std::vector<int> res; self.checkInside(*pt, res); return res;})
+    .def("setPointsToMergeBoxes", [] (CGALMesh &self, MergeBoxes &mboxes) {
+                                  })
 #if 0
     .def("generateInsideOctomap", [](CGALMesh &self, int size_hint) {
         double resolution = 0.1;
@@ -103,5 +106,16 @@ PYBIND11_MODULE(CGALMesh, m)
                   [] (SgOctomap &self, const Vector3 &v) { self.offset = v; })
     .def_property("scale", [] (SgOctomap &self) { return self.scale; },
                   [] (SgOctomap &self, const Vector3 &v) { self.scale = v; })
+    ;
+
+    py::class_< MergeBoxes > (m, "MergeBoxes")
+    .def(py::init<size_t, size_t, size_t>())
+    .def("setPoints", &MergeBoxes::setPoints)
+    .def("mregePoints", &MergeBoxes::mergePoints)
+    .def("addBoxPrimitives", &MergeBoxes::addBoxPrimitives)
+    .def("getSize", [](MergeBoxes &self) { int _x, _y, _z;
+            self.getSize(_x, _y, _z); std::vector<int> res;
+            res.push_back(_x); res.push_back(_y); res.push_back(_z);
+            return res; })
     ;
 }
