@@ -5,6 +5,7 @@
 #include <cnoid/PyUtil>
 #include <cnoid/PyEigenTypes>
 #include "../src/CnoidCGAL.h"
+#include "../src/CnoidOctomap.h"
 #include "../src/MergeBoxes.h"
 
 using Matrix4RM = Eigen::Matrix<double, 4, 4, Eigen::RowMajor>;
@@ -85,6 +86,24 @@ PYBIND11_MODULE(CGALMesh, m)
                                     ret = mboxes.setPoints(res);
                                     if (!ret) { return 2; }
                                     return 0; })
+    .def("addPointsOctomap", [] (CGALMesh &self, SgOctomapPtr octomap, std::vector<int> &start_end_xyz) {
+                                 // set offset and boxSize to mboxes before calling this method
+                                 std::vector<Vector3> pt; // points buffer
+                                 double res_ = octomap->getResolution();
+                                 self.generateInsidePoints(res_, start_end_xyz, octomap->offset(), octomap->scale(), pt);
+                                 octomap->addPoints(pt);  })
+    ;
+
+    py::class_< SgOctomap, SgOctomapPtr > (m, "SgOctomap")
+    .def(py::init<double>())
+    .def("addPointSet", &SgOctomap::addPointSet)
+    .def("prune", &SgOctomap::prune)
+    .def("expand", &SgOctomap::expand)
+    .def("addBoxPrimitives", &SgOctomap::addBoxPrimitives)
+    .def_property("offset", [] (SgOctomap &self) { return self.offset(); },
+                  [] (SgOctomap &self, const Vector3 &v) { self.offset() = v; })
+    .def_property("scale", [] (SgOctomap &self) { return self.scale(); },
+                  [] (SgOctomap &self, const Vector3 &v) { self.scale() = v; })
     ;
 
     py::class_< MergeBoxes > (m, "MergeBoxes")
