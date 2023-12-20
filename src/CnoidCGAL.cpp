@@ -180,7 +180,7 @@ CGALMeshPtr CGALMesh::copyFrom(const SgMesh &_sgmesh, const Isometry3 &T)
     CloneMap cm;
     CGALMeshPtr ptr(new CGALMesh(_sgmesh, &cm));
     ptr->transform(T);
-    ptr->updateCGAL();
+    ptr->updateCGAL();//???
     return ptr;
 }
 bool CGALMesh::updateSelfByCGAL()
@@ -357,4 +357,44 @@ CGALMeshPtr CGALMesh::createByIntersection(const CGALMeshPtr target, const Isome
     ret->object->cgal_obj = tmp;
     bool res = ret->updateSelfByCGAL();
     return ret;
+}
+bool CGALMesh::checkInside(const Vector3 &p)
+{
+    if(!!object) {
+        return object->checkInside(p);
+    }
+    return false;
+}
+bool CGALMesh::checkInside(const Vector3f &p)
+{
+    if(!!object) {
+        return object->checkInside(p);
+    }
+    return false;
+}
+bool CGALMesh::checkInside(const SgPointSet &pt, std::vector<int> &_result)
+{
+    if(!!object) {
+        return object->checkInside(pt, _result);
+    }
+    return false;
+}
+bool CGALMesh::generateInsidePoints(double resolution, const std::vector<int> &start_end_xyz,
+                                    const Vector3 &offset, const Vector3 &scale, std::vector<Vector3> &result)
+{
+    if(!!object && start_end_xyz.size() > 5) {
+        return object->generateInsidePoints(start_end_xyz[0], start_end_xyz[1], start_end_xyz[2], start_end_xyz[3],
+                                            start_end_xyz[4], start_end_xyz[5], resolution, result,
+                                            offset.x(), offset.y(), offset.z(), scale.x(), scale.y(), scale.z());
+    }
+    return false;
+}
+bool CGALMesh::generateInsidePointsIndices(size_t x_length, size_t y_length, size_t z_length,
+                                           const Vector3 &size, const Vector3 &offset, std::vector<int> &indices)
+{
+    if(!!object) {
+        return object->generateInsidePointsIndices(x_length, y_length, z_length, size.x(), size.y(), size.z(),
+                                                   indices, offset.x(), offset.y(), offset.z());
+    }
+    return false;
 }

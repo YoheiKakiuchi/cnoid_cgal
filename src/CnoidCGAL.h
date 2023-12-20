@@ -71,11 +71,20 @@ public:
     CGALMeshPtr createByIntersection(const CGALMeshPtr target) const;
     CGALMeshPtr createByIntersection(const CGALMeshPtr target, const Isometry3 &T) const;
 
+    bool checkInside(const Vector3 &p);
+    bool checkInside(const Vector3f &p);
+    bool checkInside(const SgPointSet &pt, std::vector<int> &_result);
+
+    // for Octomap
+    bool generateInsidePoints(double resolution, const std::vector<int> &start_end_xyz,
+                              const Vector3 &offset, const Vector3 &scale, std::vector<Vector3> &result);
+    // for MergeBoxes
+    bool generateInsidePointsIndices(size_t x_length, size_t y_length, size_t z_length,
+                                     const Vector3 &size, const Vector3 &offset, std::vector<int> &indices);
 private:
     class CGALObj;
     CGALObj *object;
 };
 
 }
-
 #endif // __CHOREONOID_CGAL_LIB_H__

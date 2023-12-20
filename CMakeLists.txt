@@ -27,6 +27,7 @@ choreonoid_add_library(
   SHARED
   src/CnoidCGAL.cpp
   src/CGALUtil.cpp
+  src/MergeBoxes.cpp
   )
 target_include_directories(${target_lib}
   PUBLIC
