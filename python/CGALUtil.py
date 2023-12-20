@@ -4,7 +4,9 @@ from irsl_choreonoid.irsl_draw_object import coordsWrapper as coordsWrapper
 from irsl_choreonoid.draw_coords import GeneralDrawInterfaceWrapped as DrawInterface
 import irsl_choreonoid.make_shapes as mkshapes
 #from cnoid.CGALMesh import SgMeshDbl
-from cnoid.CGALMesh import CGALMesh
+from cnoid.CGALMesh import CGALMesh, SgOctomap, MergeBoxes
+
+import numpy as np
 
 def cgalShape(shape, material=None, wrapped=True, rawShape=False, coords=None, **kwargs):
     shape.setMesh(CGALMesh(shape.mesh))
@@ -32,11 +34,23 @@ def cgalShape(shape, material=None, wrapped=True, rawShape=False, coords=None, *
 
 #def loadScene(fname, wrapped=True, rawShape=False, coords=None, **kwargs):
 def loadScene(fname, wrapped=True, rawShape=False, coords=None, **kwargs):
-    return cgalShape(mkshapes.loadScene(fname, rawShape=True, **kwargs),
+    ret=mkshapes.loadScene(fname, rawShape=True, **kwargs)
+    slst=mkshapes.extractShapes(ret)
+    if len(slst) == 0:
+        raise Exception('no shape was loaded from {}'.foramt(fname))
+    if len(slst) > 1:
+        print('there are more than one({}) shapes'.format(len(slst)))
+    return cgalShape(slst[0][0],
                      wrapped=wrapped, rawShape=rawShape, coords=coords, material=False, **kwargs)
 #def loadMesh(fname, wrapped=True, rawShape=False, coords=None, **kwargs):
 def loadMesh(fname, wrapped=True, rawShape=False, coords=None, **kwargs):
-    return cgalShape(mkshapes.loadMesh(fname, rawShape=True, **kwargs),
+    ret=mkshapes.loadMesh(fname, rawShape=True, **kwargs)
+    slst=mkshapes.extractShapes(ret)
+    if len(slst) == 0:
+        raise Exception('no shape was loaded from {}'.foramt(fname))
+    if len(slst) > 1:
+        print('there are more than one({}) shapes'.format(len(slst)))
+    return cgalShape(slst[0][0],
                      wrapped=wrapped, rawShape=rawShape, coords=coords, material=False, **kwargs)
 #def makeBox(x, y = None, z = None, wrapped=True, rawShape=False, coords=None, **kwargs):
 def makeBox(x, y = None, z = None, wrapped=True, rawShape=False, coords=None, **kwargs):
@@ -271,3 +285,81 @@ def createByIntersection(object0, object1, SgRoot=None):
         trans.addChild(sp)
         return trans
     return res
+
+def convertToBoxes(cgalmesh, dim=None, dim_x=1, dim_y=1, dim_z=1, material=None):
+    if isinstance(cgalmesh, coordsWrapper):
+        obj=cgalmesh.object
+        if isinstance(obj, cutil.SgShape):
+            cgalmesh=obj.mesh
+        elif isinstance(obj, cutil.SgNode):
+            slst=mkshapes.extractShapes(obj)
+            if len(slst) == 0:
+                raise Exception('no shape was in {}'.foramt(cgalmesh))
+            if len(slst) > 1:
+                print('there are more than one({}) shapes'.format(len(slst)))
+            cgalmesh=slst[0][0].mesh
+    ##
+    if not isinstance(cgalmesh, CGALMesh):
+        raise Exception('{} is not instance of CGALMesh'.format(cgalmesh))
+    ##
+    if dim is not None:
+        dim_x = dim
+        dim_y = dim
+        dim_z = dim
+    ##
+    bbx_=cgalmesh.boundingBox()
+    bbs_=bbx_.size()
+    mb_size = np.array((bbs_[0]/dim_x, bbs_[1]/dim_y, bbs_[2]/dim_z))
+    mb_offset = bbx_.min() + mb_size/2
+    ##
+    mb=MergeBoxes(dim_x, dim_y, dim_z)
+    mb.boxSize=mb_size
+    mb.offset=mb_offset
+    res=cgalmesh.addPointsMergeBoxes(mb)
+    ##
+    if res == 0:
+        mb.mergePoints()
+        ##mb.sizeOfBoxes
+        gg  = cutil.SgGroup()
+        if material is None:
+            material = cutil.SgMaterial()
+        mb.addBoxPrimitives(gg, material)
+        return gg
+
+#### not implemented yet
+def createOctomap(cgalmesh, material=None): ##
+    if isinstance(cgalmesh, coordsWrapper):
+        obj=cgalmesh.object
+        if isintance(obj, cutil.SgShape):
+            cgalmesh=obj.mesh
+        elif isinstance(obj, cutil.SgNode):
+            slst=mkshapes.extractShapes(obj)
+            if len(slst) == 0:
+                raise Exception('no shape was in {}'.foramt(cgalmesh))
+            if len(slst) > 1:
+                print('there are more than one({}) shapes'.format(len(slst)))
+            cgalmesh=slst[0][0].mesh
+    ##
+    if not isinstance(cgalmesh, CGALMesh):
+        raise Exception('{} is not instance of CGALMesh'.format(cgalmesh))
+    ##
+    bbx_=cgalmesh.boundingBox()
+    ##
+    ## calc resolution, offset, size, start_end_xyz
+    ##
+    resolution = 0.005
+    offset=np.array((0, 0, 0))
+    scale =np.array((1, 1, 1))
+    start_end_xyz = [0, 10, 0, 10, 0, 10]
+    ##
+    oct_=SgOctomap(resolution)
+    oct_.offset = offset
+    oct_.scale  = scale
+    cgalmesh.addPointsOctomap(oct_, start_end_xyz)
+
+    oct_.prune()
+    gg  = cutil.SgGroup()
+    if material is None:
+        material = cutil.SgMaterial()
+    oct_.addBoxPrimitives(gg, material)
+    return gg
