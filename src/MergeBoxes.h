@@ -20,7 +20,18 @@ public:
     void mergePoints();
 
     //SceneDrawables
-    void addBoxPrimitives(SgGroupPtr sgg, const Vector3 &offset, const Vector3 &size, SgMaterial *mat = nullptr);
+    void addBoxPrimitives(SgGroupPtr sgg, SgMaterial *mat = nullptr);
+    void resetBoxes();
+    size_t sizeOfBoxes();
+
+    Vector3& offset() { return offset_; }
+    const Vector3& offset() const { return offset_; }
+    Vector3& boxSize() { return box_size_; }
+    const Vector3& boxSize() const { return box_size_; }
+
+private:
+    Vector3 offset_;
+    Vector3 box_size_;
 
 protected:
     size_t size_x;
@@ -54,6 +65,12 @@ public:
             _y = ey - sy + 1;
             _z = ez - sz + 1;
         }
+        inline void getActualBoxSize(Vector3 &result, const Vector3 &box_size)
+        {
+            result.x() = (ex - sx + 1) * box_size.x();
+            result.y() = (ey - sy + 1) * box_size.y();
+            result.z() = (ez - sz + 1) * box_size.z();
+        }
         inline void getCenter(float &_x, float &_y, float &_z)
         {
             _x = (sx + ex)*0.5;
@@ -61,14 +78,24 @@ public:
             _z = (sz + ez)*0.5;
         }
         inline void getActualCenter(double &_x, double &_y, double &_z,
-                                    const Vector3 &offset, const Vector3 &size)
+                                    const Vector3 &offset, const Vector3 &box_size)
         {
             float _cx, _cy, _cz;
             getCenter(_cx, _cy, _cz);
-
-            _x = _cx * size.x() + offset.x();
-            _y = _cy * size.y() + offset.y();
-            _z = _cz * size.z() + offset.z();
+            //
+            _x = _cx * box_size.x() + offset.x();
+            _y = _cy * box_size.y() + offset.y();
+            _z = _cz * box_size.z() + offset.z();
+        }
+        inline void getActualCenter(Vector3 &result,
+                                    const Vector3 &offset, const Vector3 &box_size)
+        {
+            float _cx, _cy, _cz;
+            getCenter(_cx, _cy, _cz);
+            //
+            result.x() = _cx * box_size.x() + offset.x();
+            result.y() = _cy * box_size.y() + offset.y();
+            result.z() = _cz * box_size.z() + offset.z();
         }
     };
 
@@ -82,7 +109,7 @@ public:
         DIR_M_Z,
     };
 
-public:
+protected:
     std::vector<Box> boxes;
 
 protected:

@@ -26,8 +26,13 @@ public:
 
     void addBoxPrimitives(SgGroupPtr sgg, SgMaterial *mat = nullptr);
 
-    Vector3 offset;
-    Vector3 scale;
+    Vector3& offset() { return offset_; }
+    const Vector3& offset() const { return offset_; }
+    Vector3& scale() { return scale_; }
+    const Vector3& scale() const { return scale_; }
+private:
+    Vector3 offset_;
+    Vector3 scale_;
 };
 
 }

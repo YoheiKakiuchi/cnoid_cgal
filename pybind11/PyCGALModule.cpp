@@ -77,23 +77,21 @@ PYBIND11_MODULE(CGALMesh, m)
     .def("checkInside", [](CGALMesh &self, const Vector3f &v) { return self.checkInside(v); })
     .def("checkInside", [](CGALMesh &self, const SgPointSetPtr &pt) {
         std::vector<int> res; self.checkInside(*pt, res); return res;})
-    .def("setPointsToMergeBoxes", [] (CGALMesh &self, MergeBoxes &mboxes) {
-                                  })
-#if 0
-    .def("generateInsideOctomap", [](CGALMesh &self, int size_hint) {
-        double resolution = 0.1;
-        std::vector<int> start_end_xyz(6);
-        Vector3 offset;
-        //
-        //bounding_box
-        //
-        SgOctomapPtr res_ = new SgOctomap(resolution);
-        std::vector<Vector3> pt; // points buffer
-        self.generateInsidePoints(resolution, start_end_xyz, offset, pt);
-        res_->addPoints(pt);
-        res_->offset = offset;
-        return res_; })
-#endif
+    .def("addPointsMergeBoxes", [] (CGALMesh &self, MergeBoxes &mboxes) {
+                                    // set offset and boxSize to mboxes before calling this method
+                                    std::vector<int> res; int _x, _y, _z; bool ret;
+                                    mboxes.getSize(_x, _y, _z);
+                                    ret = self.generateInsidePointsIndices(_x, _y, _z, mboxes.boxSize(), mboxes.offset(), res);
+                                    if (!ret) { return 1; }
+                                    ret = mboxes.setPoints(res);
+                                    if (!ret) { return 2; }
+                                    return 0; })
+    .def("addPointsOctomap", [] (CGALMesh &self, SgOctomapPtr octomap, std::vector<int> &start_end_xyz) {
+                                 // set offset and boxSize to mboxes before calling this method
+                                 std::vector<Vector3> pt; // points buffer
+                                 double res_ = octomap->getResolution();
+                                 self.generateInsidePoints(res_, start_end_xyz, octomap->offset(), octomap->scale(), pt);
+                                 octomap->addPoints(pt);  })
     ;
 
     py::class_< SgOctomap, SgOctomapPtr > (m, "SgOctomap")
@@ -102,20 +100,26 @@ PYBIND11_MODULE(CGALMesh, m)
     .def("prune", &SgOctomap::prune)
     .def("expand", &SgOctomap::expand)
     .def("addBoxPrimitives", &SgOctomap::addBoxPrimitives)
-    .def_property("offset", [] (SgOctomap &self) { return self.offset; },
-                  [] (SgOctomap &self, const Vector3 &v) { self.offset = v; })
-    .def_property("scale", [] (SgOctomap &self) { return self.scale; },
-                  [] (SgOctomap &self, const Vector3 &v) { self.scale = v; })
+    .def_property("offset", [] (SgOctomap &self) { return self.offset(); },
+                  [] (SgOctomap &self, const Vector3 &v) { self.offset() = v; })
+    .def_property("scale", [] (SgOctomap &self) { return self.scale(); },
+                  [] (SgOctomap &self, const Vector3 &v) { self.scale() = v; })
     ;
 
     py::class_< MergeBoxes > (m, "MergeBoxes")
     .def(py::init<size_t, size_t, size_t>())
     .def("setPoints", &MergeBoxes::setPoints)
-    .def("mregePoints", &MergeBoxes::mergePoints)
+    .def("mergePoints", &MergeBoxes::mergePoints)
     .def("addBoxPrimitives", &MergeBoxes::addBoxPrimitives)
+    .def("resetBoxes", &MergeBoxes::resetBoxes)
+    .def_property_readonly("sizeOfBoxes", &MergeBoxes::sizeOfBoxes)
     .def("getSize", [](MergeBoxes &self) { int _x, _y, _z;
             self.getSize(_x, _y, _z); std::vector<int> res;
             res.push_back(_x); res.push_back(_y); res.push_back(_z);
             return res; })
+    .def_property("offset", [] (MergeBoxes &self) { return self.offset(); },
+                  [] (MergeBoxes &self, const Vector3 &v) { self.offset() = v; })
+    .def_property("boxSize", [] (MergeBoxes &self) { return self.boxSize(); },
+                  [] (MergeBoxes &self, const Vector3 &v) { self.boxSize() = v; })
     ;
 }

@@ -5,7 +5,7 @@
 
 using namespace cnoid;
 
-SgOctomap::SgOctomap(float resolution) : octomap::OcTree(resolution), offset(Vector3::Zero()), scale(1, 1, 1)
+SgOctomap::SgOctomap(float resolution) : octomap::OcTree(resolution), offset_(Vector3::Zero()), scale_(1, 1, 1)
 {
 }
 
@@ -39,10 +39,10 @@ void SgOctomap::addPoints(const std::vector<Vector3> &pt)
 
 void SgOctomap::addBoxPrimitives(SgGroupPtr sgg, SgMaterial *mat)
 {
-    double scl_x = this->scale.x();
-    double scl_y = this->scale.y();
-    double scl_z = this->scale.z();
-    Vector3 _offset(this->offset.x(), this->offset.y(), this->offset.z());
+    double scl_x = this->scale_.x();
+    double scl_y = this->scale_.y();
+    double scl_z = this->scale_.z();
+    Vector3 _offset(this->offset_.x(), this->offset_.y(), this->offset_.z());
 
     for(auto it = this->begin_leafs(); it != this->end_leafs(); it++) {
         double sz = it.getSize();

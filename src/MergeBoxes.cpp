@@ -7,9 +7,19 @@ MergeBoxes::MergeBoxes(size_t _xx, size_t _yy, size_t _zz) : size_x(_xx), size_y
 {
 }
 
+void MergeBoxes::resetBoxes()
+{
+    boxes.clear();
+}
+
+size_t MergeBoxes::sizeOfBoxes()
+{
+    return boxes.size();
+}
+
 bool MergeBoxes::setPoints(std::vector<int> &_points)
 {
-    if ( points.size() != size_x * size_y * size_z ) {
+    if ( _points.size() != size_x * size_y * size_z ) {
         return false;
     }
     points = _points;
@@ -60,11 +70,11 @@ void MergeBoxes::mergePoints()
             break;
         case Direction::DIR_P_Y:
             ey_ += 1;
-            expand_idx += size_y;
+            expand_idx += size_x;
             break;
         case Direction::DIR_M_Y:
             sy_ -= 1;
-            expand_idx -= size_y;
+            expand_idx -= size_x;
             break;
         case Direction::DIR_P_Z:
             ez_ += 1;
@@ -116,27 +126,24 @@ void MergeBoxes::mergePoints()
     }
 }
 
-void MergeBoxes::addBoxPrimitives(SgGroupPtr sgg, const Vector3 &offset, const Vector3 &size, SgMaterial *mat)
+void MergeBoxes::addBoxPrimitives(SgGroupPtr sgg, SgMaterial *mat)
 {
-    double sz_x = size.x();
-    double sz_y = size.y();
-    double sz_z = size.z();
-
     for(size_t i = 0; i < boxes.size(); i++) {
         Box &cur_box_ = boxes[i];
-        Vector3 size_;
-        Vector3 pos_;
-        pos_ += offset;
+        Vector3 bx_size;
+        Vector3 bx_pos;
+        cur_box_.getActualBoxSize(bx_size, box_size_);
+        cur_box_.getActualCenter(bx_pos, offset_, box_size_);
         //
         MeshGenerator mg;
-        SgMesh *mesh_ = mg.generateBox(size_);
+        SgMesh *mesh_ = mg.generateBox(bx_size);
         SgPosTransform *trs_ = new SgPosTransform();
         SgShape *sp_ = new SgShape();
         //
         sp_->setMesh(mesh_);
         sp_->setMaterial(mat);
         //
-        trs_->setTranslation(pos_);
+        trs_->setTranslation(bx_pos);
         trs_->addChild(sp_);
         //
         sgg->addChild(trs_);
