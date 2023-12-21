@@ -11,6 +11,7 @@
 
   <depend>choreonoid</depend>
   <depend>cgal</depend>
+  <depend>octomap</depend>
 
   <export>
     <build_type>cmake</build_type>
