@@ -1,5 +1,6 @@
 # jupyter console --kernel=choreonoid
 exec(open('/choreonoid_ws/install/share/irsl_choreonoid/sample/irsl_import.py').read())
+import cnoid.CGALUtil as cgal
 
 def convertToBoxes(cgalmesh, dim=None, dim_x=1, dim_y=1, dim_z=1, material=None):
     bbx_=cgalmesh.boundingBox()
@@ -39,14 +40,13 @@ def generateOctomap(cgalmesh, resolution=0.001, st_x=0, ed_x=100, st_y=0, ed_y=1
         hh = bsize/mx
         ##
         sz = size_hint/math.pow(hh[0] * hh[1] * hh[2], 1.0/3)
-
+        ##
         xs = int(hh[0] * sz)
         ys = int(hh[1] * sz)
         zs = int(hh[2] * sz)
         ##print('{} {} {}'.format(xs, ys, zs))
         print('size_hint is not implemented yet!')
         return
-
     off_ = fv(off_x, off_y, off_z, dtype='float32')
     pts=cutil.SgPointSet()
     pts.setVertices(fv((0, 0, 0), dtype='float32'))
@@ -80,9 +80,9 @@ def generateOctomap(cgalmesh, resolution=0.001, st_x=0, ed_x=100, st_y=0, ed_y=1
 ###
 #di=DrawInterface()
 #
-#cgalmesh = mkshapes.loadMesh('/home/irsl/src/robot_assembler_config_IRSL/meshes/x_series/short_frame_mm.stl', meshScale=0.001)
+#cgalmesh = cgal.loadMesh('/home/irsl/src/robot_assembler_config_IRSL/meshes/x_series/short_frame_mm.stl', meshScale=0.001)
 #sg_g_box = cgal.convertToBoxes(cgalmesh, dim=20)
-#(sg_g_oct, pts, off_) = cgal.generateOctomap(cgalmesh)
+#sg_g_oddct = cgal.createOctomap(cgalmesh)
 #
 #di.addObject(sg_g_box)
 #
