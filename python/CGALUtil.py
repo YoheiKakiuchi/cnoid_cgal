@@ -330,7 +330,7 @@ def convertToBoxes(cgalmesh, dim=None, dim_x=1, dim_y=1, dim_z=1, material=None)
 def createOctomap(cgalmesh, material=None): ##
     if isinstance(cgalmesh, coordsWrapper):
         obj=cgalmesh.object
-        if isintance(obj, cutil.SgShape):
+        if isinstance(obj, cutil.SgShape):
             cgalmesh=obj.mesh
         elif isinstance(obj, cutil.SgNode):
             slst=mkshapes.extractShapes(obj)
