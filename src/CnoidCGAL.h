@@ -81,6 +81,8 @@ public:
     // for MergeBoxes
     bool generateInsidePointsIndices(size_t x_length, size_t y_length, size_t z_length,
                                      const Vector3 &size, const Vector3 &offset, std::vector<int> &indices);
+    bool generateInsideBoxIndices(size_t x_length, size_t y_length, size_t z_length,
+                                  const Vector3 &size, const Vector3 &offset, std::vector<int> &indices);
 private:
     class CGALObj;
     CGALObj *object;

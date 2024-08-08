@@ -18,6 +18,7 @@ public:
     bool setPoints(std::vector<int> &_points);
     void getSize(int &_x, int &_y, int &_z);
     void mergePoints();
+    void rawBoxes();
 
     //SceneDrawables
     void addBoxPrimitives(SgGroupPtr sgg, SgMaterial *mat = nullptr);

@@ -10,6 +10,14 @@
 #include <CGAL/Polygon_2.h> // not using ??
 // volume
 #include <CGAL/Polygon_mesh_processing/measure.h>
+// do_intersection
+//#include <CGAL/Polygon_mesh_processing/intersection.h>
+// clip
+//#include <CGAL/Iso_cuboid_3.h>
+//#include <CGAL/Polygon_mesh_processing/clip.h>
+//Kernel::IsoCuboid3
+//typedef CGAL::Iso_cuboid_3<CGAL_Kernel> IsoCuboid;
+
 //
 #include <CGAL/Side_of_triangle_mesh.h>
 
@@ -665,6 +673,136 @@ bool CGALMesh::CGALObj::generateInsidePointsIndices(size_t _x_len, size_t _y_len
                     } else {
                         indices.push_back(-1);
                     }
+                }
+            }
+        }
+        return true;
+    }
+    return false;
+}
+bool CGALMesh::CGALObj::generateInsideBoxIndices(size_t _x_len, size_t _y_len, size_t _z_len,
+                                                 double size_x, double size_y, double size_z,
+                                                 std::vector<int> &indices, double off_x, double off_y, double off_z)
+{
+    if(!!cgal_obj) {
+        indices.resize(0);
+        Polyhedron plh;
+        cgal_obj->convert_to_polyhedron(plh);
+        CGAL::Side_of_triangle_mesh<Polyhedron, CGAL_Kernel> inside(plh);
+        int counter = 0;
+        double x_2 = size_x / 2.0;
+        double y_2 = size_y / 2.0;
+        double z_2 = size_z / 2.0;
+        for(size_t zz = 0; zz < _z_len; zz++) {
+            double obj_ptz = size_z * zz + off_z;
+            for(size_t yy = 0; yy < _y_len; yy++) {
+                double obj_pty = size_y * yy + off_y;
+                for(size_t xx = 0; xx < _x_len; xx++) {
+                    double obj_ptx = size_x * xx + off_x;
+                    {
+                        Polyhedron::Point_3 p(obj_ptx, obj_pty, obj_ptz);
+                        CGAL::Bounded_side res = inside(p);
+                        if (res == CGAL::ON_BOUNDED_SIDE) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        } else if (res == CGAL::ON_BOUNDARY) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        }
+                    }
+                    {
+                        Polyhedron::Point_3 p(obj_ptx + x_2, obj_pty + y_2, obj_ptz - z_2);
+                        CGAL::Bounded_side res = inside(p);
+                        if (res == CGAL::ON_BOUNDED_SIDE) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        } else if (res == CGAL::ON_BOUNDARY) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        }
+                    }
+                    {
+                        Polyhedron::Point_3 p(obj_ptx + x_2, obj_pty - y_2, obj_ptz - z_2);
+                        CGAL::Bounded_side res = inside(p);
+                        if (res == CGAL::ON_BOUNDED_SIDE) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        } else if (res == CGAL::ON_BOUNDARY) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        }
+                    }
+                    {
+                        Polyhedron::Point_3 p(obj_ptx - x_2, obj_pty + y_2, obj_ptz - z_2);
+                        CGAL::Bounded_side res = inside(p);
+                        if (res == CGAL::ON_BOUNDED_SIDE) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        } else if (res == CGAL::ON_BOUNDARY) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        }
+                    }
+                    {
+                        Polyhedron::Point_3 p(obj_ptx - x_2, obj_pty - y_2, obj_ptz - z_2);
+                        CGAL::Bounded_side res = inside(p);
+                        if (res == CGAL::ON_BOUNDED_SIDE) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        } else if (res == CGAL::ON_BOUNDARY) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        }
+                    }
+                    ////
+                    {
+                        Polyhedron::Point_3 p(obj_ptx + x_2, obj_pty + y_2, obj_ptz + z_2);
+                        CGAL::Bounded_side res = inside(p);
+                        if (res == CGAL::ON_BOUNDED_SIDE) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        } else if (res == CGAL::ON_BOUNDARY) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        }
+                    }
+                    {
+                        Polyhedron::Point_3 p(obj_ptx + x_2, obj_pty - y_2, obj_ptz + z_2);
+                        CGAL::Bounded_side res = inside(p);
+                        if (res == CGAL::ON_BOUNDED_SIDE) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        } else if (res == CGAL::ON_BOUNDARY) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        }
+                    }
+                    {
+                        Polyhedron::Point_3 p(obj_ptx - x_2, obj_pty + y_2, obj_ptz + z_2);
+                        CGAL::Bounded_side res = inside(p);
+                        if (res == CGAL::ON_BOUNDED_SIDE) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        } else if (res == CGAL::ON_BOUNDARY) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        }
+                    }
+                    {
+                        Polyhedron::Point_3 p(obj_ptx - x_2, obj_pty - y_2, obj_ptz + z_2);
+                        CGAL::Bounded_side res = inside(p);
+                        if (res == CGAL::ON_BOUNDED_SIDE) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        } else if (res == CGAL::ON_BOUNDARY) {
+                            indices.push_back(counter);
+                            goto succ_exit;
+                        }
+                    }
+                    indices.push_back(-1);
+                    counter--;
+                succ_exit:
+                    counter++;
                 }
             }
         }

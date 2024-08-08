@@ -126,6 +126,23 @@ void MergeBoxes::mergePoints()
     }
 }
 
+void MergeBoxes::rawBoxes()
+{
+    for (size_t cur_idx = 0; cur_idx < points.size(); cur_idx++) {
+        if (points[cur_idx] < 0) { // there is no point
+            continue;
+        }
+        int x_, y_, z_;
+        index_to_coords(cur_idx, x_, y_, z_);
+
+        Box cur_box(x_, x_, y_, y_, z_, z_);
+        cur_box.id = points[cur_idx];
+        //points[cur_idx] = -1;
+        //points[expand_idx] = -1;
+        boxes.push_back(cur_box);
+    }
+}
+
 void MergeBoxes::addBoxPrimitives(SgGroupPtr sgg, SgMaterial *mat)
 {
     for(size_t i = 0; i < boxes.size(); i++) {

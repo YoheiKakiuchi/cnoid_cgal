@@ -398,3 +398,12 @@ bool CGALMesh::generateInsidePointsIndices(size_t x_length, size_t y_length, siz
     }
     return false;
 }
+bool CGALMesh::generateInsideBoxIndices(size_t x_length, size_t y_length, size_t z_length,
+                                        const Vector3 &size, const Vector3 &offset, std::vector<int> &indices)
+{
+    if(!!object) {
+        return object->generateInsideBoxIndices(x_length, y_length, z_length, size.x(), size.y(), size.z(),
+                                                indices, offset.x(), offset.y(), offset.z());
+    }
+    return false;
+}

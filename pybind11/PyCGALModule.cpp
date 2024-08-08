@@ -86,6 +86,15 @@ PYBIND11_MODULE(CGALMesh, m)
                                     ret = mboxes.setPoints(res);
                                     if (!ret) { return 2; }
                                     return 0; })
+    .def("addPointsMergeBoxes2", [] (CGALMesh &self, MergeBoxes &mboxes) {
+                                    // set offset and boxSize to mboxes before calling this method
+                                    std::vector<int> res; int _x, _y, _z; bool ret;
+                                    mboxes.getSize(_x, _y, _z);
+                                    ret = self.generateInsideBoxIndices(_x, _y, _z, mboxes.boxSize(), mboxes.offset(), res);
+                                    if (!ret) { return 1; }
+                                    ret = mboxes.setPoints(res);
+                                    if (!ret) { return 2; }
+                                    return 0; })
     .def("addPointsOctomap", [] (CGALMesh &self, SgOctomapPtr octomap, std::vector<int> &start_end_xyz) {
                                  // set offset and boxSize to mboxes before calling this method
                                  std::vector<Vector3> pt; // points buffer
@@ -110,6 +119,7 @@ PYBIND11_MODULE(CGALMesh, m)
     .def(py::init<size_t, size_t, size_t>())
     .def("setPoints", &MergeBoxes::setPoints)
     .def("mergePoints", &MergeBoxes::mergePoints)
+    .def("rawBoxes", &MergeBoxes::rawBoxes)
     .def("addBoxPrimitives", &MergeBoxes::addBoxPrimitives)
     .def("resetBoxes", &MergeBoxes::resetBoxes)
     .def_property_readonly("sizeOfBoxes", &MergeBoxes::sizeOfBoxes)

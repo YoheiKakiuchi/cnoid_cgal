@@ -286,7 +286,7 @@ def createByIntersection(object0, object1, SgRoot=None):
         return trans
     return res
 
-def convertToBoxes(cgalmesh, dim=None, dim_x=1, dim_y=1, dim_z=1, material=None):
+def convertToBoxes(cgalmesh, dim=None, dim_x=1, dim_y=1, dim_z=1, material=None, useBox=False, merge=True):
     if isinstance(cgalmesh, coordsWrapper):
         obj=cgalmesh.object
         if isinstance(obj, cutil.SgShape):
@@ -315,10 +315,16 @@ def convertToBoxes(cgalmesh, dim=None, dim_x=1, dim_y=1, dim_z=1, material=None)
     mb=MergeBoxes(dim_x, dim_y, dim_z)
     mb.boxSize=mb_size
     mb.offset=mb_offset
-    res=cgalmesh.addPointsMergeBoxes(mb)
+    if useBox:
+        res=cgalmesh.addPointsMergeBoxes2(mb)
+    else:
+        res=cgalmesh.addPointsMergeBoxes(mb)
     ##
     if res == 0:
-        mb.mergePoints()
+        if merge:
+            mb.mergePoints()
+        else:
+            mb.rawBoxes()
         ##mb.sizeOfBoxes
         gg  = cutil.SgGroup()
         if material is None:

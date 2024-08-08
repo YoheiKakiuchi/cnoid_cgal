@@ -79,6 +79,9 @@ public:
     bool generateInsidePointsIndices(size_t _x_len, size_t _y_len, size_t _z_len,
                                      double size_x, double size_y, double size_z,
                                      std::vector<int> &indices, double off_x = 0.0, double off_y = 0.0, double off_z = 0.0);
+    bool generateInsideBoxIndices(size_t _x_len, size_t _y_len, size_t _z_len,
+                                  double size_x, double size_y, double size_z,
+                                  std::vector<int> &indices, double off_x = 0.0, double off_y = 0.0, double off_z = 0.0);
     int error_count;
     Nef_polyhedron *cgal_obj;
 };
